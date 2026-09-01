@@ -1,3 +1,10 @@
+const salaN = document.getElementById("salaNum")
+function sala_(numero) {
+    salaN.innerHTML = `Sala ${numero}`
+}
+
+sala_()
+
 const portaMSG = document.getElementById("porta")
 let portaVR = false
 
@@ -26,12 +33,12 @@ function ligarAr() {
     if (arVR === false) {
         arMSG.innerHTML += "Ligar ar-condicionado <br>"
         arMSG.innerHTML += "Status: <b> DESLIGADO </b> <br>"
-        arMSG.innerHTML += "Temperatura: 23ºC"
+        arMSG.innerHTML += "Temperatura: 23ºC" //Colocar variável depois
         arMSG.style.backgroundColor = "rgb(238, 138, 138)"
     } else {
         arMSG.innerHTML += "Desligar ar-condicionado <br>"
         arMSG.innerHTML += "Status: <b> LIGADO </b> <br>"
-        arMSG.innerHTML += "Temperatura: 23ºC"
+        arMSG.innerHTML += "Temperatura: 23ºC" //Colocar variável depois
         arMSG.style.backgroundColor = "rgb(198, 233, 198)"
     }
     arVR = !arVR
@@ -41,11 +48,11 @@ function ligarLuz() {
     luzMSG.innerHTML = ""
     if (luzVR === false) {
         luzMSG.innerHTML += "Ligar luz <br>"
-        luzMSG.innerHTML += "Status: <b> DESLIGADA </b>"
+        luzMSG.innerHTML += "Status: <b> DESLIGADA </b>" //Colocar variável depois
         luzMSG.style.backgroundColor = "rgb(238, 138, 138)"
     } else {
         luzMSG.innerHTML += "Desligar luz <br>"
-        luzMSG.innerHTML += "Status: <b> LIGADO </b>"
+        luzMSG.innerHTML += "Status: <b> LIGADO </b>" //Colocar variável depois
         luzMSG.style.backgroundColor = "rgb(198, 233, 198)"
     }
     luzVR = !luzVR
