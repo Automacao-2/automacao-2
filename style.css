@@ -1,0 +1,16 @@
+body { 
+    background-color: rgb(41, 126, 41);
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+}
+
+button {
+    height: 100px;
+    width: 100px;
+}
+
+div {
+    gap: 25px;
+}
