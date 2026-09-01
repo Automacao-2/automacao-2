@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<title>Sala _</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+
+	<body>
+        <figure id="logo"><img src="../logoIF.png"></figure>
+
+        <div class="salas">
+            <div>
+                <button onclick="abrirPorta()" id="porta">
+                    Abrir porta <br>
+                    Status: TRANCADA
+                </button>
+
+                <button onclick="ligarAr()" id="ar">
+                    Ligar ar-condicionado <br>
+                    Status: Desligado <br>
+                    Temperatura: 23ºC
+                </button>
+
+                <button onclick="ligarLuz()" id="luz">
+                    Ligar luz <br>
+                    Status: DESLIGADA
+                </button>
+
+                <button onclick="monitoramento()" id="monitorar">
+                    Monitorar
+                </button>
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+	</body>
+</html>
