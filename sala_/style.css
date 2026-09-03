@@ -1,34 +1,61 @@
 body { 
     display: flex;
-    background-color: rgb(187, 181, 181)(197, 191, 191);
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    gap: 50px;
+    background-color: rgb(238, 234, 234);
+}
+
+#logo {
+    width: 20%;
+    height: auto;
+    align-self: center; /* Centraliza verticalmente apenas a imagem */
+}
+
+.conteudo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    gap: 20px;
+}
+
+#salaNum {
+    margin: 0;
+    font-size: 36px;
+    text-align: center;
 }
 
 .salas {
     display: grid;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
 }
 
-.acao, button {
-    height: 250px;
-    width: 250px;
-    margin: 10px;
+button {
+    margin: 5px;
     font-size: 27.5px;
+    aspect-ratio: 1 / 1;
+    max-width: 250px;
     border-radius: 15px;
     border: 2px solid black;
+    background-color: rgb(198, 233, 198);
 }
 
 .acao { background-color: rgb(238, 138, 138); }
-button { background-color: rgb(198, 233, 198); }
 
 button:hover { 
     cursor: pointer;
     transition: transform 0.2s, background-color 0.2s;
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 button:active { 
-    transform: scale(0.9);
+    transform: scale(0.95);
     background-color: rgb(97, 175, 97);
 }
