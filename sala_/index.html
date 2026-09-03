@@ -10,23 +10,27 @@
         <div class="salas">
             <h1 id="salaNum">Sala_</h1>
             <div>
-                <button onclick="abrirPorta()" id="porta">
+                <button onclick="voltar()">
+                    Voltar
+                </button>
+
+                <button onclick="abrirPorta()" id="porta" class="acao">
                     Abrir porta <br>
                     Status: <b> TRANCADA </b>
                 </button>
 
-                <button onclick="ligarAr()" id="ar">
+                <button onclick="ligarAr()" id="ar" class="acao">
                     Ligar ar-condicionado <br>
                     Status: <b> DESLIGADO </b> <br>
                     Temperatura: 23ºC
                 </button>
 
-                <button onclick="ligarLuz()" id="luz">
+                <button onclick="ligarLuz()" id="luz" class="acao">
                     Ligar luz <br>
                     Status: <b> DESLIGADA </b>
                 </button>
 
-                <button onclick="monitoramento()" id="monitorar">
+                <button onclick="monitoramento()" id="monitorar" class="acao">
                     Monitorar
                 </button>
             </div>

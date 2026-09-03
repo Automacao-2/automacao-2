@@ -1,9 +1,10 @@
-const salaN = document.getElementById("salaNum")
-function sala_(numero) {
-    salaN.innerHTML = `Sala ${numero}`
-}
+const parametros = new URLSearchParams(window.location.search) // Lê a string da URL ("?sala=1")
+const numeroSala = parametros.get('sala') // Pega o valor da chave 'sala'
 
-sala_()
+if (numeroSala) {
+    document.getElementById('salaNum').innerText = `Sala ${numeroSala}`
+    document.title = `Sala ${numeroSala}`
+}
 
 const portaMSG = document.getElementById("porta")
 let portaVR = false
@@ -14,7 +15,12 @@ let arVR = false
 const luzMSG = document.getElementById("luz")
 let luzVR = false
 
+function voltar() {
+    window.location.href="../index.html"
+}
+
 function abrirPorta() {
+    portaVR = !portaVR
     portaMSG.innerHTML = ""
     if (portaVR === false) {
         portaMSG.innerHTML += "Abrir porta <br>"
@@ -25,10 +31,10 @@ function abrirPorta() {
         portaMSG.innerHTML += "Status: <b> ABERTA </b>"
         portaMSG.style.backgroundColor = "rgb(198, 233, 198)"
     }
-    portaVR = !portaVR
 }
 
 function ligarAr() {
+    arVR = !arVR
     arMSG.innerHTML = ""
     if (arVR === false) {
         arMSG.innerHTML += "Ligar ar-condicionado <br>"
@@ -41,10 +47,10 @@ function ligarAr() {
         arMSG.innerHTML += "Temperatura: 23ºC" //Colocar variável depois
         arMSG.style.backgroundColor = "rgb(198, 233, 198)"
     }
-    arVR = !arVR
 }
 
 function ligarLuz() {
+    luzVR = !luzVR
     luzMSG.innerHTML = ""
     if (luzVR === false) {
         luzMSG.innerHTML += "Ligar luz <br>"
@@ -55,7 +61,6 @@ function ligarLuz() {
         luzMSG.innerHTML += "Status: <b> LIGADO </b>" //Colocar variável depois
         luzMSG.style.backgroundColor = "rgb(198, 233, 198)"
     }
-    luzVR = !luzVR
 }
 
 function monitoramento() {

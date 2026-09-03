@@ -10,15 +10,17 @@ body {
     flex-direction: row;
 }
 
-button {
+.acao, button {
     height: 250px;
     width: 250px;
     margin: 10px;
     font-size: 27.5px;
     border-radius: 15px;
     border: 2px solid black;
-    background-color: rgb(198, 233, 198);
 }
+
+.acao { background-color: rgb(238, 138, 138); }
+button { background-color: rgb(198, 233, 198); }
 
 button:hover { 
     cursor: pointer;
