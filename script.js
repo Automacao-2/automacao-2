@@ -3,5 +3,5 @@ function irParaSala_(event) {
     const numeroSala = botaoClicado.dataset.sala //Lê o valor de 'data-sala'
     
     // Redireciona passando o número na URL (Query Parameter)
-    window.location.href = `./sala_/index_sala.html?sala=${numeroSala}`
+    window.location.href = `./sala_/index.html?sala=${numeroSala}`
 }

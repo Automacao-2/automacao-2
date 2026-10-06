@@ -1,49 +1,47 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
-
-/*
-=================================================================
-FUTURA EXPANSÃO: Biblioteca para Sinais IR de Ar-Condicionado
-=================================================================
 #include <IRremoteESP8266.h>
-#include <IRsend.h>
-#include <ir_Gree.h> // Ou ir_LG, ir_Samsung, ir_Midea...
-const uint16_t kIrLedPin = 4;
-IRGreeAC ac(kIrLedPin);
-*/
+#include <IRrecv.h>
+#include <IRutils.h>
 
-// --- Credenciais de Rede Wi-Fi ---
-const char* ssid = "NOME_DA_SUA_REDE_WIFI";
-const char* password = "SENHA_DA_SUA_REDE";
+//Credenciais de Rede Wi-Fi
+//const char* ssid = "NOME_DA_SUA_REDE_WIFI";
+//const char* password = "SENHA_DA_SUA_REDE";
 
-// --- Definição dos Pinos de Hardware ---
-const int PIN_RELE_LUZ = 18;       // Relé da luz
-const int PIN_TRANCA = 19;         // Tranca elétrica / Relé 2
-const int PIN_PIR = 23;            // Sensor de Presença PIR
-const int PIN_IR_EMISSOR = 4;      // LED Emissor Infravermelho
+const char* ssid = "Visitante";
+const char* password = "Bemvindo";
 
-// --- Servidor Web HTTP na Porta 80 ---
+//Definição dos Pinos de Hardware
+const int PIN_RELE_LUZ = 5;      // Relé da luz
+const int PIN_TRANCA = 19;        // Tranca elétrica / Relé 2
+const int PIN_PIR = 23;           // Sensor de Presença PIR
+const int PIN_RECEPTOR_1838 = 16; // Sinal 'S' do Receptor IR (VS1838B)
+
+//Instância do Receptor IR
+IRrecv irrecv(PIN_RECEPTOR_1838);
+decode_results resultadosIR;
+
+//Servidor Web HTTP na Porta 80
 WebServer server(80);
 
-// --- Variáveis de Estado Interno ---
+//Variáveis de Estado Interno
 bool estadoLuz = false;
 bool estadoTranca = false; // false = Trancada, true = Destrancada
-bool estadoAr = false;
+String ultimoCodigoIR = "Nenhum";
 
-// Configuração de Cabeçalhos CORS (Permite requisições da interface Web)
+//Configuração de Cabeçalhos CORS
 void aplicarCORS() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-// --- Funções de Controle de Periféricos ---
-
+//Funções de Controle
 void setLuz(bool ligar) {
   estadoLuz = ligar;
-  // Módulos relé comuns acionam com nível lógico LOW
-  digitalWrite(PIN_RELE_LUZ, estadoLuz ? LOW : HIGH);
+  Serial.print(ligar);
+  digitalWrite(PIN_RELE_LUZ, estadoLuz ? HIGH : LOW);
 }
 
 void setTranca(bool destrancar) {
@@ -51,32 +49,19 @@ void setTranca(bool destrancar) {
   digitalWrite(PIN_TRANCA, estadoTranca ? HIGH : LOW);
 }
 
-void enviarComandoIR(bool ligar) {
-  estadoAr = ligar;
-  
-  if (ligar) {
-    // Sinal simples de teste para o LED IR (Protótipo)
-    digitalWrite(PIN_IR_EMISSOR, HIGH);
+// Lógica de verificação e leitura do sensor IR
+void verificarReceptorIR() {
+  if (irrecv.decode(&resultadosIR)) {
+    // Converte o valor numérico lido para String Hexadecimal
+    ultimoCodigoIR = resultToHexidecimal(&resultadosIR);
     
-    /* 
-    =================================================================
-    FUTURA EXPANSÃO: Envio de pacote IR real para o Ar-Condicionado
-    =================================================================
-    ac.on();
-    ac.setTemp(22);
-    ac.setFan(1);
-    ac.send();
-    */
-  } else {
-    digitalWrite(PIN_IR_EMISSOR, LOW);
-    
-    /* 
-    =================================================================
-    FUTURA EXPANSÃO: Desligar via IR real
-    =================================================================
-    ac.off();
-    ac.send();
-    */
+    Serial.print("Sinal IR Recebido: ");
+    Serial.println(ultimoCodigoIR);
+    Serial.print("Protocolo: ");
+    Serial.println(typeToString(resultadosIR.decode_type));
+
+    // Prepara o sensor para a próxima leitura
+    irrecv.resume();
   }
 }
 
@@ -90,11 +75,11 @@ void handleOptions() {
 void handleStatus() {
   aplicarCORS();
   
-  StaticJsonDocument<200> doc;
+  StaticJsonDocument<250> doc;
   doc["luz"] = estadoLuz;
   doc["tranca"] = estadoTranca ? "destrancado" : "trancado";
-  doc["ar"] = estadoAr;
   doc["presenca"] = (digitalRead(PIN_PIR) == HIGH);
+  doc["ultimo_ir"] = ultimoCodigoIR;
 
   String respostaJson;
   serializeJson(doc, respostaJson);
@@ -127,19 +112,6 @@ void handleTranca() {
   }
 }
 
-void handleAr() {
-  aplicarCORS();
-  if (server.hasArg("plain")) {
-    StaticJsonDocument<200> doc;
-    deserializeJson(doc, server.arg("plain"));
-    bool ligar = doc["ligar"];
-    enviarComandoIR(ligar);
-    server.send(200, "application/json", "{\"status\":\"ok\"}");
-  } else {
-    server.send(400, "application/json", "{\"erro\":\"requisicao incorreta\"}");
-  }
-}
-
 // --- Setup e Loop ---
 
 void setup() {
@@ -149,60 +121,49 @@ void setup() {
   pinMode(PIN_RELE_LUZ, OUTPUT);
   pinMode(PIN_TRANCA, OUTPUT);
   pinMode(PIN_PIR, INPUT);
-  pinMode(PIN_IR_EMISSOR, OUTPUT);
+
+  // Inicializa a escuta do receptor VS1838B
+  irrecv.enableIRIn();
 
   // Estados Iniciais
   setLuz(false);
   setTranca(false);
 
-  /*
-  =================================================================
-  FUTURA EXPANSÃO: Inicializar IR Protocol
-  =================================================================
-  ac.begin();
-  */
-
   // Conexão Wi-Fi
   WiFi.begin(ssid, password);
   Serial.print("Conectando ao Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED) {
+  
+  int tentativas = 0;
+  while (WiFi.status() != WL_CONNECTED && tentativas < 30) {
     delay(500);
     Serial.print(".");
+    tentativas++;
   }
 
-  Serial.println("\nWi-Fi Conectado com sucesso!");
-  Serial.print("Endereço IP do ESP32: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWi-Fi Conectado com sucesso!");
+    Serial.print("Endereço IP do ESP32: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nFalha ao conectar ao Wi-Fi! Verifique a senha ou se a rede é 2.4GHz.");
+  }
 
-  // Rotas GET / POST
+  // Registra as rotas da API
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/luz", HTTP_POST, handleLuz);
   server.on("/tranca", HTTP_POST, handleTranca);
-  server.on("/ar", HTTP_POST, handleAr);
 
-  // Rotas Pré-flight CORS (Navegador)
   server.on("/luz", HTTP_OPTIONS, handleOptions);
   server.on("/tranca", HTTP_OPTIONS, handleOptions);
-  server.on("/ar", HTTP_OPTIONS, handleOptions);
 
   server.begin();
   Serial.println("Servidor Web HTTP pronto!");
 }
 
 void loop() {
+  // Trata requisições HTTP do aplicativo/navegador
   server.handleClient();
 
-  /*
-  =================================================================
-  FUTURA EXPANSÃO: Lógica Automática com PIR (Ex: Temporizador)
-  =================================================================
-  static unsigned long ultimoMovimento = 0;
-  if (digitalRead(PIN_PIR) == HIGH) {
-      ultimoMovimento = millis();
-  }
-  // Se passar 15 minutos sem movimento, desliga as luzes
-  if (millis() - ultimoMovimento > 900000 && estadoLuz) {
-      setLuz(false);
-  }
-  */
+  // Verifica continuamente se o receptor IR capturou algum botão
+  verificarReceptorIR();
 }
