@@ -1,5 +1,6 @@
 <html>
 	<head>
+		<meta charset="UTF-8">
 		<title>Sala _</title>
 		<link rel="stylesheet" href="style_sala.css">
 	</head>
@@ -20,11 +21,18 @@
                     Status: <b> TRANCADA </b>
                 </button>
 
-                <button onclick="ligarAr()" id="ar" class="acao">
-                    Ligar ar-condicionado <br>
-                    Status: <b> DESLIGADO </b> <br>
-                    Temperatura: 23ºC
-                </button>
+                <div class="card-ar">
+                    <button onclick="ligarAr()" id="ar" class="acao">
+                        Ligar ar-condicionado <br>
+                        Status: <b> DESLIGADO </b>
+                    </button>
+
+                    <div class="temp-controle">
+                        <button onclick="mudarTemp(-1)" aria-label="Diminuir temperatura">&minus;</button>
+                        <span id="tempAr">23ºC</span>
+                        <button onclick="mudarTemp(1)" aria-label="Aumentar temperatura">+</button>
+                    </div>
+                </div>
 
                 <button onclick="ligarLuz()" id="luz" class="acao">
                     Ligar luz <br>
@@ -34,6 +42,16 @@
                 <button onclick="monitoramento()" id="monitorar" class="acao">
                     Monitorar
                 </button>
+            </div>
+        </div>
+
+        <div id="modalCamera" class="modal">
+            <div class="modal-conteudo">
+                <span class="fechar" onclick="fecharMonitoramento()">&times;</span>
+                <h2>Câmera da Sala</h2>
+                <div class="video-container">
+                    <img id="streamCamera" src="" alt="Aguardando sinal da câmera..."> <!-- A imagem de transmissão do ESP32-CAM será carregada aqui -->
+                </div>
             </div>
         </div>
 
