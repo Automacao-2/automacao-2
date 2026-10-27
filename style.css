@@ -1,45 +1,172 @@
-body { 
-    display: flex;
-    background-color: rgb(238, 234, 234);
-    justify-content: center;
-    flex-direction: row;
-    min-height: 100vh;
-    align-items: flex-start;
-    gap: 2.5px;
-    padding: 20px;
+:root {
+    --primary: #2d8647;
+    --primary-hover: #226836;
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
-.salas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Botão tem no mínimo 250px */
-    gap: 20px;
-    width: 100%;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.app-header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 24px;
+}
+
+.header-container {
     max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 #logo {
-    width: 20%;
-    height: auto;
-    align-self: center;
+    height: 48px;
+    width: auto;
+    object-fit: contain;
 }
 
-button {
-    margin: 5px;
-    font-size: 27.5px;
-    aspect-ratio: 1 / 1;
-    max-width: 250px;
-    border-radius: 15px;
-    border: 2px solid black;
-    background-color: rgb(198, 233, 198);
+.brand-info h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
-button:hover { 
+.brand-info p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #f0fdf4;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+/* Main */
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    width: 100%;
+}
+
+.section-title {
+    margin-bottom: 24px;
+}
+
+.section-title h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.section-title p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* Grid de Salas */
+.salas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.sala-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     cursor: pointer;
-    transition: transform 0.2s, background-color 0.2s;
-    transform: scale(1.1);
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease-in-out;
 }
 
-button:active { 
-    transform: scale(0.9);
-    background-color: rgb(97, 175, 97);
+.sala-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary);
+}
+
+.sala-card .icon {
+    font-size: 40px;
+    color: var(--primary);
+}
+
+.sala-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.sala-badge {
+    font-size: 0.8rem;
+    padding: 4px 12px;
+    background-color: #f1f5f9;
+    color: var(--text-muted);
+    border-radius: 12px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.sala-card:hover .sala-badge {
+    background-color: var(--primary);
+    color: #ffffff;
+}
+
+@media (max-width: 600px) {
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
 }
