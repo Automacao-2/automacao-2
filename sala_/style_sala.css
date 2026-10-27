@@ -42,7 +42,7 @@ body {
     padding: 12px 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     z-index: 2000;
     opacity: 0;
     transform: translateY(-20px);
@@ -104,7 +104,7 @@ body {
 }
 
 .brand h1 {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
 }
 
@@ -112,7 +112,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.85rem;
+    font-size: 1rem;
     padding: 6px 12px;
     border-radius: 20px;
     font-weight: 500;
@@ -181,12 +181,12 @@ body {
 }
 
 .card-icon {
-    font-size: 32px;
+    font-size: 48px;
     color: var(--text-muted);
 }
 
 .badge {
-    font-size: 0.75rem;
+    font-size: 1rem;
     font-weight: 700;
     padding: 4px 10px;
     border-radius: 12px;
@@ -209,20 +209,20 @@ body {
 }
 
 .card-body h3 {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 4px;
 }
 
 .card-body p {
-    font-size: 0.85rem;
+    font-size: 1rem;
     color: var(--text-muted);
     margin-bottom: 16px;
 }
 
 /* Ar Condicionado Temperatura */
 .temp-display {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
     font-weight: 700;
     color: var(--text-main);
     text-align: center;
@@ -230,7 +230,7 @@ body {
 }
 
 .temp-display .unit {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: var(--text-muted);
 }
 
@@ -265,7 +265,7 @@ body {
     border-radius: 10px;
     border: none;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 1.15rem;
     cursor: pointer;
     background-color: var(--primary);
     color: white;
@@ -331,12 +331,12 @@ body {
 }
 
 .modal-header h2 {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     font-weight: 600;
 }
 
 .fechar {
-    font-size: 24px;
+    font-size: 48px;
     color: var(--text-muted);
     cursor: pointer;
 }
