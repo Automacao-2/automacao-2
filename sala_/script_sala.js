@@ -1,210 +1,249 @@
-//Substitua pelo endereço IP gerado no Serial Monitor do ESP32
+// Configuração dos IPs dos dispositivos
 const IP_ESP32 = "http://10.14.55.32";
- 
-// Substitua pelo IP gerado pelo Monitor Serial no ESP32-CAM (ex: http://10.14.52.250:81/stream)
 const IP_ESP32_CAM = "http://10.14.52.250:81/stream";
- 
-const VERDE = "rgb(198, 233, 198)";
-const VERMELHO = "rgb(238, 138, 138)";
- 
+
 const TEMP_MIN = 16;
 const TEMP_MAX = 30;
- 
-const portaMSG = document.getElementById("porta")
-let portaVR = false
- 
-const arMSG = document.getElementById("ar")
-const tempMSG = document.getElementById("tempAr")
-let arVR = false
-let tempAr = 23
-let timerTemp = null // Espera o usuário parar de clicar antes de mandar a temperatura
- 
-const luzMSG = document.getElementById("luz")
-let luzVR = false
- 
- 
-// --- Atualização visual dos botões ---
+
+// Estado global da sala
+let portaVR = false;
+let luzVR = false;
+let arVR = false;
+let tempAr = 23;
+let timerTemp = null;
+
+// Elementos de UI
+const portaBtn = document.getElementById("btnPorta");
+const portaBadge = document.getElementById("badgePorta");
+const portaIcon = document.getElementById("iconPorta");
+
+const luzBtn = document.getElementById("btnLuz");
+const luzBadge = document.getElementById("badgeLuz");
+const luzIcon = document.getElementById("iconLuz");
+
+const arBtn = document.getElementById("btnAr");
+const arBadge = document.getElementById("badgeAr");
+const arIcon = document.getElementById("iconAr");
+const tempDisplay = document.getElementById("tempAr");
+
+const connectionStatus = document.getElementById("connectionStatus");
+const statusText = document.getElementById("statusText");
+
+// Toast Notification
+function showToast(message, isError = false) {
+    const toast = document.getElementById("toast");
+    toast.innerText = message;
+    toast.className = `toast show ${isError ? 'error' : ''}`;
+    setTimeout(() => {
+        toast.className = "toast";
+    }, 3000);
+}
+
+// --- Renderização visual ---
 function renderPorta() {
     if (!portaVR) {
-        portaMSG.innerHTML = "Abrir porta <br>Status: <b> FECHADA </b>";
-        portaMSG.style.backgroundColor = VERMELHO;
+        portaBtn.innerText = "Abrir Porta";
+        portaBtn.classList.remove("active");
+        portaBadge.innerText = "TRANCADA";
+        portaBadge.className = "badge badge-fechada";
+        portaIcon.innerText = "lock";
+        portaIcon.style.color = "var(--danger)";
     } else {
-        portaMSG.innerHTML = "Fechar porta <br>Status: <b> ABERTA </b>";
-        portaMSG.style.backgroundColor = VERDE;
+        portaBtn.innerText = "Fechar Porta";
+        portaBtn.classList.add("active");
+        portaBadge.innerText = "DESTRANCADA";
+        portaBadge.className = "badge badge-aberta";
+        portaIcon.innerText = "lock_open";
+        portaIcon.style.color = "var(--success)";
     }
 }
- 
+
 function renderLuz() {
     if (!luzVR) {
-        luzMSG.innerHTML = "Ligar luz <br>Status: <b> DESLIGADA </b>";
-        luzMSG.style.backgroundColor = VERMELHO;
+        luzBtn.innerText = "Ligar Luz";
+        luzBtn.classList.remove("active");
+        luzBadge.innerText = "DESLIGADA";
+        luzBadge.className = "badge badge-desligado";
+        luzIcon.innerText = "lightbulb";
+        luzIcon.style.color = "var(--text-muted)";
     } else {
-        luzMSG.innerHTML = "Desligar luz <br>Status: <b> LIGADA </b>";
-        luzMSG.style.backgroundColor = VERDE;
+        luzBtn.innerText = "Desligar Luz";
+        luzBtn.classList.add("active");
+        luzBadge.innerText = "LIGADA";
+        luzBadge.className = "badge badge-ligado";
+        luzIcon.innerText = "lightbulb";
+        luzIcon.style.color = "#eab308"; // Amarelo aceso
     }
 }
- 
+
 function renderAr() {
     if (!arVR) {
-        arMSG.innerHTML = "Ligar ar-condicionado <br>Status: <b> DESLIGADO </b>";
-        arMSG.style.backgroundColor = VERMELHO;
+        arBtn.innerText = "Ligar Ar-Condicionado";
+        arBtn.classList.remove("active");
+        arBadge.innerText = "DESLIGADO";
+        arBadge.className = "badge badge-desligado";
+        arIcon.style.color = "var(--text-muted)";
     } else {
-        arMSG.innerHTML = "Desligar ar-condicionado <br>Status: <b> LIGADO </b>";
-        arMSG.style.backgroundColor = VERDE;
+        arBtn.innerText = "Desligar Ar-Condicionado";
+        arBtn.classList.add("active");
+        arBadge.innerText = "LIGADO";
+        arBadge.className = "badge badge-ligado";
+        arIcon.style.color = "var(--info)";
     }
-    tempMSG.innerText = `${tempAr}ºC`;
+    tempDisplay.innerText = tempAr;
 }
- 
- 
-// --- Comunicação com o ESP32 ---
+
+// --- Comunicação com ESP32 ---
 async function enviarComando(rota, corpo) {
-    const resposta = await fetch(`${IP_ESP32}${rota}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(corpo)
-    });
- 
-    if (!resposta.ok) {
-        const dados = await resposta.json().catch(() => ({}));
-        throw new Error(dados.erro || `HTTP ${resposta.status}`);
+    try {
+        const resposta = await fetch(`${IP_ESP32}${rota}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(corpo)
+        });
+
+        if (!resposta.ok) {
+            const dados = await resposta.json().catch(() => ({}));
+            throw new Error(dados.erro || `HTTP ${resposta.status}`);
+        }
+        setConexaoStatus(true);
+    } catch (erro) {
+        setConexaoStatus(false);
+        throw erro;
     }
 }
 
-
-// Lê o estado real do ESP32 (inclui mudanças feitas pelo controle remoto original)
 async function atualizarStatus() {
-    if (timerTemp) return; // Não sobrescreve uma mudança de temperatura que ainda vai ser enviada
- 
+    if (timerTemp) return; // Aguarda envio do debounce de temperatura
+
     try {
-        const resposta = await fetch(`${IP_ESP32}/status`);
+        const resposta = await fetch(`${IP_ESP32}/status`, { signal: AbortSignal.timeout(3000) });
         const status = await resposta.json();
- 
+
         luzVR = status.luz;
         portaVR = status.tranca === "destrancado";
         if (status.ar) {
             arVR = status.ar.ligado;
             tempAr = Math.round(status.ar.temperatura);
         }
- 
+
         renderPorta();
         renderLuz();
         renderAr();
+        setConexaoStatus(true);
     } catch (erro) {
-        console.warn("Não foi possível ler o status do ESP32:", erro);
+        setConexaoStatus(false);
+        console.warn("Falha na sincronização com o ESP32:", erro);
     }
 }
- 
- 
-// --- Ações dos botões ---
+
+function setConexaoStatus(online) {
+    if (online) {
+        connectionStatus.className = "connection-status conectado";
+        statusText.innerText = "Online";
+    } else {
+        connectionStatus.className = "connection-status desconnectado";
+        statusText.innerText = "Offline";
+    }
+}
+
+// --- Ações ---
 async function abrirPorta() {
     portaVR = !portaVR;
     renderPorta();
- 
+
     try {
         await enviarComando("/tranca", { destrancar: portaVR });
-        console.log("Porta")
+        showToast(portaVR ? "Porta destrancada!" : "Porta trancada!");
     } catch (erro) {
-        console.error("Erro ao comunicar com o ESP32:", erro);
+        portaVR = !portaVR; // Reverte se falhar
+        renderPorta();
+        showToast("Erro ao acionar porta.", true);
     }
 }
- 
+
 async function ligarLuz() {
     luzVR = !luzVR;
     renderLuz();
- 
+
     try {
         await enviarComando("/luz", { ligar: luzVR });
-        console.log("Luz")
+        showToast(luzVR ? "Luzes ligadas!" : "Luzes desligadas!");
     } catch (erro) {
-        console.error("Erro ao comunicar com o ESP32:", erro);
+        luzVR = !luzVR; // Reverte
+        renderLuz();
+        showToast("Erro ao acionar iluminação.", true);
     }
 }
- 
+
 async function ligarAr() {
     arVR = !arVR;
     renderAr();
- 
+
     try {
         await enviarComando("/ar", { ligar: arVR, temperatura: tempAr });
-        console.log("Ar-condicionado")
+        showToast(arVR ? "Ar-condicionado ligado!" : "Ar-condicionado desligado!");
     } catch (erro) {
-        // Desfaz a mudança na tela se o ESP32 não conseguiu mandar o sinal
-        arVR = !arVR;
+        arVR = !arVR; // Reverte
         renderAr();
-        console.error("Erro ao comunicar com o ESP32:", erro);
-        alert(`Não foi possível controlar o ar-condicionado.\n${erro.message}`);
+        showToast("Erro ao acionar ar-condicionado.", true);
     }
 }
- 
+
 function mudarTemp(delta) {
     tempAr = Math.min(TEMP_MAX, Math.max(TEMP_MIN, tempAr + delta));
     renderAr();
- 
-    // Só manda o sinal se o ar estiver ligado (senão a temperatura vai junto quando ligar)
+
     if (!arVR) return;
- 
+
     clearTimeout(timerTemp);
     timerTemp = setTimeout(async () => {
         try {
             await enviarComando("/ar", { ligar: true, temperatura: tempAr });
-            console.log(`Temperatura: ${tempAr}ºC`)
+            showToast(`Temperatura ajustada para ${tempAr}°C`);
         } catch (erro) {
-            console.error("Erro ao comunicar com o ESP32:", erro);
-            alert(`Não foi possível mudar a temperatura.\n${erro.message}`);
+            showToast("Erro ao mudar temperatura.", true);
         } finally {
             timerTemp = null;
         }
     }, 500);
 }
- 
- 
-// --- Navegação ---
-const parametros = new URLSearchParams(window.location.search) // Lê a string da URL ("?sala=1")
-const numeroSala = parametros.get('sala') // Pega o valor da chave 'sala'
- 
-if (numeroSala) {
-    document.getElementById('salaNum').innerText = `Sala ${numeroSala}`
-    document.title = `Sala ${numeroSala}`
-}
- 
-function voltar() {
-    window.location.href="../index.html"
-}
- 
- 
+
 // --- Câmera ---
 function monitoramento() {
     const modal = document.getElementById("modalCamera");
     const imgStream = document.getElementById("streamCamera");
- 
-    // Define a URL da transmissão (MJPEG Stream) da câmera
     imgStream.src = IP_ESP32_CAM;
- 
-    // Exibe a janela flutuante
     modal.style.display = "flex";
 }
- 
+
 function fecharMonitoramento() {
     const modal = document.getElementById("modalCamera");
     const imgStream = document.getElementById("streamCamera");
- 
-    // Interrompe o carregamento da imagem/stream ao fechar a janela
     imgStream.src = "";
- 
-    // Esconde a janela flutuante
     modal.style.display = "none";
 }
- 
-// Fecha o modal caso o usuário clique fora da caixa de conteúdo
+
 window.onclick = function(event) {
     const modal = document.getElementById("modalCamera");
     if (event.target === modal) {
         fecharMonitoramento();
     }
 };
- 
- 
-// Sincroniza ao abrir a página e depois a cada 5 segundos
+
+// --- Leitura de Parâmetros e Inicialização ---
+const parametros = new URLSearchParams(window.location.search);
+const numeroSala = parametros.get('sala');
+
+if (numeroSala) {
+    document.getElementById('salaNum').innerText = `Sala ${numeroSala.padStart(2, '0')}`;
+    document.title = `Sala ${numeroSala} - Automação IFRJ`;
+}
+
+function voltar() {
+    window.location.href = "../index.html";
+}
+
+// Polling e inicialização
 atualizarStatus();
 setInterval(atualizarStatus, 5000);
- 
