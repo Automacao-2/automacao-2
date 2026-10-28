@@ -1,105 +1,182 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistemas de Automação IFRJ</title>
-    <link rel="icon" href="iconeSiteIF.webp">
-    <!-- Fonte Inter e Google Material Symbols -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <header class="app-header">
-        <div class="header-container">
-            <div class="brand">
-                <img src="logoIF.png" id="logo" alt="Logo IFRJ">
-                <div class="brand-info">
-                    <h1>Sistema de Gerenciamento de Salas</h1>
-                    <p>Painel de Controle de Ambientes</p>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sistemas de Automação IFRJ</title>
+        <link rel="icon" href="iconeSiteIF.webp">
+
+        <!-- Fonte Inter e Google Material Symbols -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    
+    <body>
+        <header class="app-header">
+            <div class="header-container">
+                <div class="brand">
+                    <img src="logoIF.png" id="logo" alt="Logo IFRJ">
+                    <div class="brand-info">
+                        <h1>Sistema de Gerenciamento de Salas</h1>
+                        <p>Painel de Controle de Ambientes</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="view-toggle">
+                        <button id="btnGrid" class="toggle-btn active" onclick="alternarVisao('grid')">
+                            <span class="material-symbols-outlined">grid_view</span> Grade
+                        </button>
+                        <button id="btnMapa" class="toggle-btn" onclick="alternarVisao('mapa')">
+                            <span class="material-symbols-outlined">map</span> Planta da Faculdade
+                        </button>
+                    </div>
+                    <div class="system-status">
+                        <span class="status-dot"></span>
+                        <span>Sistema Operacional</span>
+                    </div>
                 </div>
             </div>
-            <div class="system-status">
-                <span class="status-dot"></span>
-                <span>Sistema Operacional</span>
+        </header>
+
+        <main class="main-container">
+            <!-- Visão em Grade -->
+            <div id="viewGrid" class="view-section active">
+                <div class="section-title">
+                    <h2>Selecione uma Sala</h2>
+                    <p>Gerencie iluminação, temperatura, acesso e monitoramento</p>
+                </div>
+
+                <div class="salas-grid">
+                    <button onclick="irParaSala(event)" data-sala="1" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 01</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="2" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 02</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="3" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 03</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="4" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 04</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="5" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 05</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="6" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 06</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="7" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 07</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="8" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 08</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="9" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 09</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="10" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 10</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="11" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 11</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSala(event)" data-sala="12" class="sala-card">
+                        <span class="material-symbols-outlined icon">meeting_room</span>
+                        <span class="sala-name">Sala 12</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    </header>
 
-    <main class="main-container">
-        <div class="section-title">
-            <h2>Selecione uma Sala</h2>
-            <p>Gerencie iluminação, temperatura, acesso e monitoramento</p>
+            <!-- Visão em Planta Baixa da Faculdade -->
+            <div id="viewMapa" class="view-section">
+                <div class="section-title">
+                    <h2>Planta Baixa - Campus Niterói</h2>
+                    <p>Passe o mouse sobre as salas para ver o status em tempo real e clique para gerenciar</p>
+                </div>
+
+                <div class="campus-map-wrapper">
+                    <div class="map-container">
+                        <!-- Planta da Faculdade -->
+                        <img src="plantaCampus.png" alt="Planta da Faculdade IFRJ" class="campus-map-img">
+                        
+                        <!-- Hotspots interativos para as 12 salas (posicionados sobre o mapa) -->
+                        <div class="sala-hotspot" style="top: 92%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 1)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(1)">
+                            <span class="hotspot-pin">1</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 75%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 2)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(2)">
+                            <span class="hotspot-pin">2</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 58%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 3)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(3)">
+                            <span class="hotspot-pin">3</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 41%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 4)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(4)">
+                            <span class="hotspot-pin">4</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 24%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 5)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(5)">
+                            <span class="hotspot-pin">5</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 7%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 6)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(6)">
+                            <span class="hotspot-pin">6</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 7%; left: 84.5%;" onmouseenter="mostrarTooltip(event, 7)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(7)">
+                            <span class="hotspot-pin">7</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 24%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 8)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(8)">
+                            <span class="hotspot-pin">8</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 41%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 9)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(9)">
+                            <span class="hotspot-pin">9</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 58%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 10)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(10)">
+                            <span class="hotspot-pin">10</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 75%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 11)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(11)">
+                            <span class="hotspot-pin">11</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 92%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 12)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(12)">
+                            <span class="hotspot-pin">12</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Tooltip flutuante de status -->
+        <div id="mapTooltip" class="map-tooltip">
+            <h4 id="tipSalaTitulo">Sala 01</h4>
+            <p><strong>Status:</strong> <span id="tipStatus">Online</span></p>
+            <p><strong>Luz:</strong> <span id="tipLuz">Desligada</span></p>
+            <p><strong>Porta:</strong> <span id="tipTranca">Trancada</span></p>
+            <p><strong>Temperatura:</strong> <span id="tipTemp">23°C</span></p>
+            <span class="tip-hint">Clique para abrir o painel</span>
         </div>
 
-        <div class="salas-grid">
-            <!-- Gerado dinamicamente ou listado estaticamente -->
-            <button onclick="irParaSala(event)" data-sala="1" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 01</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="2" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 02</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="3" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 03</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="4" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 04</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="5" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 05</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="6" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 06</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="7" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 07</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="8" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 08</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="9" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 09</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="10" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 10</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="11" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 11</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-            <button onclick="irParaSala(event)" data-sala="12" class="sala-card">
-                <span class="material-symbols-outlined icon">meeting_room</span>
-                <span class="sala-name">Sala 12</span>
-                <span class="sala-badge">Acessar</span>
-            </button>
-        </div>
-    </main>
-
-    <script src="script.js"></script>
-</body>
+        <script src="script.js"></script>
+    </body>
 </html>
