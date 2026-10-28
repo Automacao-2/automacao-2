@@ -1,7 +1,6 @@
 function irParaSala(event) {
     const botaoClicado = event.currentTarget;
     const numeroSala = botaoClicado.dataset.sala;
-    
     window.location.href = `./sala_/index_sala.html?sala=${numeroSala}`;
 }
 
@@ -28,8 +27,27 @@ function alternarVisao(visao) {
     }
 }
 
+function alternarAndarGrade(andar) {
+    const btn1 = document.getElementById("btnAndar1");
+    const btn2 = document.getElementById("btnAndar2");
+    const grid1 = document.getElementById("gridAndar1");
+    const grid2 = document.getElementById("gridAndar2");
+
+    if (andar === 1) {
+        btn1.classList.add("active");
+        btn2.classList.remove("active");
+        grid1.classList.add("active");
+        grid2.classList.remove("active");
+    } else {
+        btn2.classList.add("active");
+        btn1.classList.remove("active");
+        grid2.classList.add("active");
+        grid1.classList.remove("active");
+    }
+}
+
 // Controle do Tooltip na Planta Baixa
-function mostrarTooltip(event, numeroSala) {
+function mostrarTooltip(event, nomeAmbiente) {
     const tooltip = document.getElementById("mapTooltip");
     const titulo = document.getElementById("tipSalaTitulo");
     const statusEl = document.getElementById("tipStatus");
@@ -37,12 +55,11 @@ function mostrarTooltip(event, numeroSala) {
     const trancaEl = document.getElementById("tipTranca");
     const tempEl = document.getElementById("tipTemp");
 
-    titulo.innerText = `Sala ${String(numeroSala).padStart(2, '0')}`;
+    titulo.innerText = nomeAmbiente;
     
-    // Exemplo de status atual em tempo real (pode ser integrado com API do ESP32)
     statusEl.innerText = "Online";
     statusEl.style.color = "#16a34a";
-    luzEl.innerText = numeroSala % 2 === 0 ? "Ligada" : "Desligada";
+    luzEl.innerText = "Desligada";
     trancaEl.innerText = "Trancada";
     tempEl.innerText = "23°C";
 

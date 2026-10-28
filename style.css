@@ -163,15 +163,7 @@ body {
     color: #ffffff;
 }
 
-@media (max-width: 600px) {
-    .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-}
-
-/* Estilos para o alternador de visão e planta interativa */
+/* Header Actions & View Toggle */
 .header-actions {
     display: flex;
     align-items: center;
@@ -216,6 +208,64 @@ body {
     display: block;
 }
 
+/* Seletor de Andares na Grade */
+.section-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.section-header-flex .section-title {
+    margin-bottom: 0;
+}
+
+.floor-toggle {
+    display: flex;
+    background-color: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.floor-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.floor-btn.active {
+    background-color: var(--card-bg);
+    color: var(--primary);
+    box-shadow: var(--shadow);
+    font-weight: 600;
+}
+
+.floor-grid {
+    display: none;
+}
+
+.floor-grid.active {
+    display: grid;
+}
+
+.lab-card .icon {
+    color: #0284c7 !important;
+}
+
+.lab-card:hover {
+    border-color: #0284c7;
+}
+
+/* Planta e Hotspots Corrigidos */
 .campus-map-wrapper {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -244,38 +294,57 @@ body {
     display: block;
 }
 
+/* Ajuste limpo para as caixas de texto não vazarem */
 .sala-hotspot {
     position: absolute;
     transform: translate(-50%, -50%);
     cursor: pointer;
     z-index: 10;
     transition: transform 0.2s ease;
+    max-width: 110px; 
 }
 
 .sala-hotspot:hover {
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%) scale(1.1);
+    z-index: 20;
 }
 
 .hotspot-pin {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 4px 8px;
     background-color: var(--primary);
     color: white;
     font-weight: 700;
-    font-size: 0.95rem;
-    border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    font-size: 0.8rem;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
     border: 2px solid white;
-    transition: background-color 0.2s;
+    text-align: center;
+    line-height: 1.15;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.hotspot-pin.lab {
+    background-color: #0284c7;
+    font-size: 0.7rem;
+    padding: 5px 8px;
+    border-radius: 10px;
 }
 
 .sala-hotspot:hover .hotspot-pin {
     background-color: var(--primary-hover);
 }
 
+.sala-hotspot:hover .hotspot-pin.lab {
+    background-color: #0369a1;
+}
+
+/* Tooltip */
 .map-tooltip {
     display: none;
     position: fixed;
@@ -330,5 +399,9 @@ body {
     .header-actions {
         width: 100%;
         justify-content: space-between;
+    }
+    .section-header-flex {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

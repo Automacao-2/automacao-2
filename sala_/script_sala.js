@@ -233,17 +233,21 @@ window.onclick = function(event) {
 
 // --- Leitura de Parâmetros e Inicialização ---
 const parametros = new URLSearchParams(window.location.search);
-const numeroSala = parametros.get('sala');
+const nomeSala = parametros.get('sala');
 
-if (numeroSala) {
-    document.getElementById('salaNum').innerText = `Sala ${numeroSala.padStart(2, '0')}`;
-    document.title = `Sala ${numeroSala} - Automação IFRJ`;
+if (nomeSala) {
+    // Se for número (ex: 1), formata para "Sala 01", se for texto (ex: Lab_Informatica), formata os "_" para espaços
+    let tituloFormatado = nomeSala;
+    if (!isNaN(nomeSala)) {
+        tituloFormatado = `Sala ${nomeSala.padStart(2, '0')}`;
+    } else {
+        tituloFormatado = nomeSala.replace(/_/g, ' ');
+    }
+
+    document.getElementById('salaNum').innerText = tituloFormatado;
+    document.title = `${tituloFormatado} - Automação IFRJ`;
 }
 
 function voltar() {
     window.location.href = "../index.html";
 }
-
-// Polling e inicialização
-atualizarStatus();
-setInterval(atualizarStatus, 5000);

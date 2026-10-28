@@ -42,14 +42,22 @@
         </header>
 
         <main class="main-container">
-            <!-- Visão em Grade -->
+            <!-- Visão em Grade com Filtro de Andar -->
             <div id="viewGrid" class="view-section active">
-                <div class="section-title">
-                    <h2>Selecione uma Sala</h2>
-                    <p>Gerencie iluminação, temperatura, acesso e monitoramento</p>
+                <div class="section-header-flex">
+                    <div class="section-title">
+                        <h2>Selecione uma Sala</h2>
+                        <p>Gerencie iluminação, temperatura, acesso e monitoramento</p>
+                    </div>
+                    <!-- Seletor de Andar para a Grade -->
+                    <div class="floor-toggle">
+                        <button id="btnAndar1" class="floor-btn active" onclick="alternarAndarGrade(1)">1º Andar (Salas)</button>
+                        <button id="btnAndar2" class="floor-btn" onclick="alternarAndarGrade(2)">2º Andar (Laboratórios)</button>
+                    </div>
                 </div>
 
-                <div class="salas-grid">
+                <!-- Grid do 1º Andar (Salas 01 a 12) -->
+                <div id="gridAndar1" class="salas-grid floor-grid active">
                     <button onclick="irParaSala(event)" data-sala="1" class="sala-card">
                         <span class="material-symbols-outlined icon">meeting_room</span>
                         <span class="sala-name">Sala 01</span>
@@ -111,6 +119,40 @@
                         <span class="sala-badge">Acessar</span>
                     </button>
                 </div>
+
+                <!-- Grid do 2º Andar (Laboratórios) -->
+                <div id="gridAndar2" class="salas-grid floor-grid">
+                    <button onclick="irParaSalaMapa('Laboratório de Línguas')" data-sala="Laboratório de Línguas" class="sala-card lab-card">
+                        <span class="material-symbols-outlined icon">science</span>
+                        <span class="sala-name">Laboratório de Línguas</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSalaMapa('Laboratório de Informática')" data-sala="Laboratório de Informática" class="sala-card lab-card">
+                        <span class="material-symbols-outlined icon">computer</span>
+                        <span class="sala-name">Laboratório de Informática</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSalaMapa('Laboratório de Matemática')" data-sala="Laboratório de Matemática" class="sala-card lab-card">
+                        <span class="material-symbols-outlined icon">calculate</span>
+                        <span class="sala-name">Laboratório de Matemática</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSalaMapa('Laboratório de Física')" data-sala="Laboratório de Física" class="sala-card lab-card">
+                        <span class="material-symbols-outlined icon">bolt</span>
+                        <span class="sala-name">Laboratório de Física</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSalaMapa('Laboratório de Biologia')" data-sala="Laboratório de Biologia" class="sala-card lab-card">
+                        <span class="material-symbols-outlined icon">biotech</span>
+                        <span class="sala-name">Laboratório de Biologia</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                    <button onclick="irParaSalaMapa('Laboratório de Química')" data-sala="Laboratório de Química" class="sala-card lab-card">
+                        <span class="material-symbols-outlined icon">biotech</span>
+                        <span class="sala-name">Laboratório de Química</span>
+                        <span class="sala-badge">Acessar</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Visão em Planta Baixa da Faculdade -->
@@ -125,42 +167,62 @@
                         <!-- Planta da Faculdade -->
                         <img src="plantaCampus.png" alt="Planta da Faculdade IFRJ" class="campus-map-img">
                         
-                        <!-- Hotspots interativos para as 12 salas (posicionados sobre o mapa) -->
-                        <div class="sala-hotspot" style="top: 92%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 1)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(1)">
+                        <!-- Salas (1 a 12) -->
+                        <div class="sala-hotspot" style="top: 92%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 'Sala 01')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('1')">
                             <span class="hotspot-pin">1</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 75%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 2)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(2)">
+                        <div class="sala-hotspot" style="top: 75%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 'Sala 02')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('2')">
                             <span class="hotspot-pin">2</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 58%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 3)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(3)">
+                        <div class="sala-hotspot" style="top: 58%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 'Sala 03')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('3')">
                             <span class="hotspot-pin">3</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 41%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 4)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(4)">
+                        <div class="sala-hotspot" style="top: 41%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 'Sala 04')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('4')">
                             <span class="hotspot-pin">4</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 24%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 5)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(5)">
+                        <div class="sala-hotspot" style="top: 24%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 'Sala 05')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('5')">
                             <span class="hotspot-pin">5</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 7%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 6)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(6)">
+                        <div class="sala-hotspot" style="top: 7%; left: 73.5%;" onmouseenter="mostrarTooltip(event, 'Sala 06')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('6')">
                             <span class="hotspot-pin">6</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 7%; left: 84.5%;" onmouseenter="mostrarTooltip(event, 7)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(7)">
+                        <div class="sala-hotspot" style="top: 7%; left: 84.5%;" onmouseenter="mostrarTooltip(event, 'Sala 07')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('7')">
                             <span class="hotspot-pin">7</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 24%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 8)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(8)">
+                        <div class="sala-hotspot" style="top: 24%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 'Sala 08')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('8')">
                             <span class="hotspot-pin">8</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 41%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 9)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(9)">
+                        <div class="sala-hotspot" style="top: 41%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 'Sala 09')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('9')">
                             <span class="hotspot-pin">9</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 58%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 10)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(10)">
+                        <div class="sala-hotspot" style="top: 58%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 'Sala 10')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('10')">
                             <span class="hotspot-pin">10</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 75%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 11)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(11)">
+                        <div class="sala-hotspot" style="top: 75%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 'Sala 11')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('11')">
                             <span class="hotspot-pin">11</span>
                         </div>
-                        <div class="sala-hotspot" style="top: 92%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 12)" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa(12)">
+                        <div class="sala-hotspot" style="top: 92%; left: 95.5%;" onmouseenter="mostrarTooltip(event, 'Sala 12')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('12')">
                             <span class="hotspot-pin">12</span>
+                        </div>
+
+                        <!-- Laboratórios -->
+                        <div class="sala-hotspot" style="top: 31%; left: 4%;" onmouseenter="mostrarTooltip(event, 'Laboratório de Línguas')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('Laboratório de Línguas')">
+                            <span class="hotspot-pin lab">Laboratório de Línguas</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 13.5%; left: 4%;" onmouseenter="mostrarTooltip(event, 'Laboratório de Informática')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('Laboratório de Informática')">
+                            <span class="hotspot-pin lab">Laboratório de Informática</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 23%; left: 26%;" onmouseenter="mostrarTooltip(event, 'Laboratório de Matemática')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('Laboratório de Matemática')">
+                            <span class="hotspot-pin lab">Laboratório de Matemática</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 48.5%; left: 26%;" onmouseenter="mostrarTooltip(event, 'Laboratório de Física')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('Laboratório de Física')">
+                            <span class="hotspot-pin lab">Laboratório de Física</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 65.5%; left: 26%;" onmouseenter="mostrarTooltip(event, 'Laboratório de Biologia')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('Laboratório de Biologia')">
+                            <span class="hotspot-pin lab">Laboratório de Biologia</span>
+                        </div>
+                        <div class="sala-hotspot" style="top: 91%; left: 26%;" onmouseenter="mostrarTooltip(event, 'Laboratório de Química')" onmouseleave="esconderTooltip()" onclick="irParaSalaMapa('Laboratório de Química')">
+                            <span class="hotspot-pin lab">Laboratório de Química</span>
                         </div>
                     </div>
                 </div>
