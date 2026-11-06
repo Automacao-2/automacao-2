@@ -1,4 +1,3 @@
-// Configuração dos IPs dos dispositivos
 const IP_ESP32 = "http://10.14.55.32";
 const IP_ESP32_CAM = "http://10.14.52.250:81/stream";
 
@@ -8,9 +7,14 @@ const TEMP_MAX = 30;
 // Estado global da sala
 let portaVR = false;
 let luzVR = false;
-let arVR = false;
-let tempAr = 23;
-let timerTemp = null;
+
+let ar1VR = false;
+let tempAr1 = 23;
+let timerTemp1 = null;
+
+let ar2VR = false;
+let tempAr2 = 23;
+let timerTemp2 = null;
 
 // Elementos de UI
 const portaBtn = document.getElementById("btnPorta");
@@ -21,15 +25,9 @@ const luzBtn = document.getElementById("btnLuz");
 const luzBadge = document.getElementById("badgeLuz");
 const luzIcon = document.getElementById("iconLuz");
 
-const arBtn = document.getElementById("btnAr");
-const arBadge = document.getElementById("badgeAr");
-const arIcon = document.getElementById("iconAr");
-const tempDisplay = document.getElementById("tempAr");
-
 const connectionStatus = document.getElementById("connectionStatus");
 const statusText = document.getElementById("statusText");
 
-// Toast Notification
 function showToast(message, isError = false) {
     const toast = document.getElementById("toast");
     toast.innerText = message;
@@ -39,7 +37,6 @@ function showToast(message, isError = false) {
     }, 3000);
 }
 
-// --- Renderização visual ---
 function renderPorta() {
     if (!portaVR) {
         portaBtn.innerText = "Abrir Porta";
@@ -72,19 +69,27 @@ function renderLuz() {
         luzBadge.innerText = "LIGADA";
         luzBadge.className = "badge badge-ligado";
         luzIcon.innerText = "lightbulb";
-        luzIcon.style.color = "#eab308"; // Amarelo aceso
+        luzIcon.style.color = "#eab308";
     }
 }
 
-function renderAr() {
+function renderAr(id) {
+    const isAr1 = id === 1;
+    const arVR = isAr1 ? ar1VR : ar2VR;
+    const tempAr = isAr1 ? tempAr1 : tempAr2;
+    const arBtn = document.getElementById(isAr1 ? "btnAr1" : "btnAr2");
+    const arBadge = document.getElementById(isAr1 ? "badgeAr1" : "badgeAr2");
+    const arIcon = document.getElementById(isAr1 ? "iconAr1" : "iconAr2");
+    const tempDisplay = document.getElementById(isAr1 ? "tempAr1" : "tempAr2");
+
     if (!arVR) {
-        arBtn.innerText = "Ligar Ar-Condicionado";
+        arBtn.innerText = `Ligar Ar 0${id}`;
         arBtn.classList.remove("active");
         arBadge.innerText = "DESLIGADO";
         arBadge.className = "badge badge-desligado";
         arIcon.style.color = "var(--text-muted)";
     } else {
-        arBtn.innerText = "Desligar Ar-Condicionado";
+        arBtn.innerText = `Desligar Ar 0${id}`;
         arBtn.classList.add("active");
         arBadge.innerText = "LIGADO";
         arBadge.className = "badge badge-ligado";
@@ -93,7 +98,6 @@ function renderAr() {
     tempDisplay.innerText = tempAr;
 }
 
-// --- Comunicação com ESP32 ---
 async function enviarComando(rota, corpo) {
     try {
         const resposta = await fetch(`${IP_ESP32}${rota}`, {
@@ -114,7 +118,7 @@ async function enviarComando(rota, corpo) {
 }
 
 async function atualizarStatus() {
-    if (timerTemp) return; // Aguarda envio do debounce de temperatura
+    if (timerTemp1 || timerTemp2) return;
 
     try {
         const resposta = await fetch(`${IP_ESP32}/status`, { signal: AbortSignal.timeout(3000) });
@@ -122,14 +126,20 @@ async function atualizarStatus() {
 
         luzVR = status.luz;
         portaVR = status.tranca === "destrancado";
-        if (status.ar) {
-            arVR = status.ar.ligado;
-            tempAr = Math.round(status.ar.temperatura);
+
+        if (status.ar1) {
+            ar1VR = status.ar1.ligado;
+            tempAr1 = Math.round(status.ar1.temperatura);
+        }
+        if (status.ar2) {
+            ar2VR = status.ar2.ligado;
+            tempAr2 = Math.round(status.ar2.temperatura);
         }
 
         renderPorta();
         renderLuz();
-        renderAr();
+        renderAr(1);
+        renderAr(2);
         setConexaoStatus(true);
     } catch (erro) {
         setConexaoStatus(false);
@@ -147,16 +157,14 @@ function setConexaoStatus(online) {
     }
 }
 
-// --- Ações ---
 async function abrirPorta() {
     portaVR = !portaVR;
     renderPorta();
-
     try {
         await enviarComando("/tranca", { destrancar: portaVR });
         showToast(portaVR ? "Porta destrancada!" : "Porta trancada!");
     } catch (erro) {
-        portaVR = !portaVR; // Reverte se falhar
+        portaVR = !portaVR;
         renderPorta();
         showToast("Erro ao acionar porta.", true);
     }
@@ -165,51 +173,78 @@ async function abrirPorta() {
 async function ligarLuz() {
     luzVR = !luzVR;
     renderLuz();
-
     try {
         await enviarComando("/luz", { ligar: luzVR });
         showToast(luzVR ? "Luzes ligadas!" : "Luzes desligadas!");
     } catch (erro) {
-        luzVR = !luzVR; // Reverte
+        luzVR = !luzVR;
         renderLuz();
         showToast("Erro ao acionar iluminação.", true);
     }
 }
 
-async function ligarAr() {
-    arVR = !arVR;
-    renderAr();
-
-    try {
-        await enviarComando("/ar", { ligar: arVR, temperatura: tempAr });
-        showToast(arVR ? "Ar-condicionado ligado!" : "Ar-condicionado desligado!");
-    } catch (erro) {
-        arVR = !arVR; // Reverte
-        renderAr();
-        showToast("Erro ao acionar ar-condicionado.", true);
+async function ligarAr(id) {
+    if (id === 1) {
+        ar1VR = !ar1VR;
+        renderAr(1);
+        try {
+            await enviarComando("/ar", { id: 1, ligar: ar1VR, temperatura: tempAr1 });
+            showToast(ar1VR ? "Ar 01 ligado!" : "Ar 01 desligado!");
+        } catch (erro) {
+            ar1VR = !ar1VR;
+            renderAr(1);
+            showToast("Erro ao acionar Ar 01.", true);
+        }
+    } else {
+        ar2VR = !ar2VR;
+        renderAr(2);
+        try {
+            await enviarComando("/ar", { id: 2, ligar: ar2VR, temperatura: tempAr2 });
+            showToast(ar2VR ? "Ar 02 ligado!" : "Ar 02 desligado!");
+        } catch (erro) {
+            ar2VR = !ar2VR;
+            renderAr(2);
+            showToast("Erro ao acionar Ar 02.", true);
+        }
     }
 }
 
-function mudarTemp(delta) {
-    tempAr = Math.min(TEMP_MAX, Math.max(TEMP_MIN, tempAr + delta));
-    renderAr();
+function mudarTemp(id, delta) {
+    if (id === 1) {
+        tempAr1 = Math.min(TEMP_MAX, Math.max(TEMP_MIN, tempAr1 + delta));
+        renderAr(1);
+        if (!ar1VR) return;
 
-    if (!arVR) return;
+        clearTimeout(timerTemp1);
+        timerTemp1 = setTimeout(async () => {
+            try {
+                await enviarComando("/ar", { id: 1, ligar: true, temperatura: tempAr1 });
+                showToast(`Ar 01 ajustado para ${tempAr1}°C`);
+            } catch (erro) {
+                showToast("Erro ao mudar temperatura do Ar 01.", true);
+            } finally {
+                timerTemp1 = null;
+            }
+        }, 500);
+    } else {
+        tempAr2 = Math.min(TEMP_MAX, Math.max(TEMP_MIN, tempAr2 + delta));
+        renderAr(2);
+        if (!ar2VR) return;
 
-    clearTimeout(timerTemp);
-    timerTemp = setTimeout(async () => {
-        try {
-            await enviarComando("/ar", { ligar: true, temperatura: tempAr });
-            showToast(`Temperatura ajustada para ${tempAr}°C`);
-        } catch (erro) {
-            showToast("Erro ao mudar temperatura.", true);
-        } finally {
-            timerTemp = null;
-        }
-    }, 500);
+        clearTimeout(timerTemp2);
+        timerTemp2 = setTimeout(async () => {
+            try {
+                await enviarComando("/ar", { id: 2, ligar: true, temperatura: tempAr2 });
+                showToast(`Ar 02 ajustado para ${tempAr2}°C`);
+            } catch (erro) {
+                showToast("Erro ao mudar temperatura do Ar 02.", true);
+            } finally {
+                timerTemp2 = null;
+            }
+        }, 500);
+    }
 }
 
-// --- Câmera ---
 function monitoramento() {
     const modal = document.getElementById("modalCamera");
     const imgStream = document.getElementById("streamCamera");
@@ -231,19 +266,16 @@ window.onclick = function(event) {
     }
 };
 
-// --- Leitura de Parâmetros e Inicialização ---
 const parametros = new URLSearchParams(window.location.search);
 const nomeSala = parametros.get('sala');
 
 if (nomeSala) {
-    // Se for número (ex: 1), formata para "Sala 01", se for texto (ex: Lab_Informatica), formata os "_" para espaços
     let tituloFormatado = nomeSala;
     if (!isNaN(nomeSala)) {
         tituloFormatado = `Sala ${nomeSala.padStart(2, '0')}`;
     } else {
         tituloFormatado = nomeSala.replace(/_/g, ' ');
     }
-
     document.getElementById('salaNum').innerText = tituloFormatado;
     document.title = `${tituloFormatado} - Automação IFRJ`;
 }

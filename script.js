@@ -53,7 +53,8 @@ function mostrarTooltip(event, nomeAmbiente) {
     const statusEl = document.getElementById("tipStatus");
     const luzEl = document.getElementById("tipLuz");
     const trancaEl = document.getElementById("tipTranca");
-    const tempEl = document.getElementById("tipTemp");
+    const temp1El = document.getElementById("tipTemp1");
+    const temp2El = document.getElementById("tipTemp2");
 
     titulo.innerText = nomeAmbiente;
     
@@ -61,7 +62,8 @@ function mostrarTooltip(event, nomeAmbiente) {
     statusEl.style.color = "#16a34a";
     luzEl.innerText = "Desligada";
     trancaEl.innerText = "Trancada";
-    tempEl.innerText = "23°C";
+    if (temp1El) temp1El.innerText = "23°C";
+    if (temp2El) temp2El.innerText = "23°C";
 
     atualizarPosicaoTooltip(event);
     tooltip.style.display = "block";

@@ -9,62 +9,66 @@
 #include <IRac.h>
 #include <IRutils.h>
 
-//Credenciais de Rede Wi-Fi
+// Credenciais de Rede Wi-Fi
 //const char* ssid = "NOME_DA_SUA_REDE_WIFI";
 //const char* password = "SENHA_DA_SUA_REDE";
 
 const char* ssid = "Visitante";
 const char* password = "Bemvindo";
 
-//Definição dos Pinos de Hardware
+// Definição dos Pinos de Hardware
 const int PIN_RELE_LUZ = 5;       // Relé da luz
 const int PIN_TRANCA = 19;        // Tranca elétrica / Relé 2
 const int PIN_PIR = 23;           // Sensor de Presença PIR
 const int PIN_RECEPTOR_1838 = 16; // Sinal 'S' do Receptor IR (VS1838B)
-const int PIN_EMISSOR_IR = 4;     // LED infravermelho (via transistor) para o ar-condicionado
 
-//Instância do Receptor IR
-// Sinais de ar-condicionado são bem mais longos que os de controle de TV,
-// por isso o buffer maior (1024) e o timeout de 50 ms.
+// Dois Pinos Emissores Dedicados
+const int PIN_EMISSOR_IR1 = 4;    // LED infravermelho Ar 01
+const int PIN_EMISSOR_IR2 = 17;   // LED infravermelho Ar 02
+
+// Instância do Receptor IR
 const uint16_t kTamanhoBufferIR = 1024;
 const uint8_t kTimeoutIR = 50;
 IRrecv irrecv(PIN_RECEPTOR_1838, kTamanhoBufferIR, kTimeoutIR, true);
 decode_results resultadosIR;
 
-//Controle do Ar-Condicionado (suporta dezenas de marcas: Gree, Midea, LG, Samsung, Daikin...)
-IRac ar(PIN_EMISSOR_IR);
+// Duas Instâncias de Controle IRac
+IRac ar1(PIN_EMISSOR_IR1);
+IRac ar2(PIN_EMISSOR_IR2);
 Preferences prefs; // Guarda a marca/modelo aprendidos mesmo após reiniciar
 
-//Servidor Web HTTP na Porta 80
+// Servidor Web HTTP na Porta 80
 WebServer server(80);
 
-//Variáveis de Estado Interno
+// Variáveis de Estado Interno
 bool estadoLuz = false;
-bool estadoTranca = false; // false = Trancada, true = Destrancada
+bool estadoTranca = false;
 String ultimoCodigoIR = "Nenhum";
 
-//Configuração de Cabeçalhos CORS
+// Controle de reconexão Wi-Fi
+unsigned long ultimaTentativaConexao = 0;
+const unsigned long INTERVALO_RECONEXAO = 10000; // Tenta reconectar a cada 10s se cair
+
 void aplicarCORS() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-
-//Funções de Controle
 void setLuz(bool ligar) {
   estadoLuz = ligar;
-  Serial.print(ligar);
+  Serial.print("Luz alterada para: ");
+  Serial.println(ligar ? "LIGADA" : "DESLIGADA");
   digitalWrite(PIN_RELE_LUZ, estadoLuz ? HIGH : LOW);
 }
 
 void setTranca(bool destrancar) {
   estadoTranca = destrancar;
+  Serial.print("Tranca alterada para: ");
+  Serial.println(destrancar ? "DESTRANCADA" : "TRANCADA");
   digitalWrite(PIN_TRANCA, estadoTranca ? HIGH : LOW);
 }
 
-
-// --- Ar-Condicionado ---
 const char* modoParaTexto(stdAc::opmode_t modo) {
   switch (modo) {
     case stdAc::opmode_t::kHeat: return "quente";
@@ -83,85 +87,109 @@ stdAc::opmode_t textoParaModo(const String& texto) {
   return stdAc::opmode_t::kCool;
 }
 
-bool arConfigurado() {
-  return ar.next.protocol != decode_type_t::UNKNOWN;
+bool arConfigurado(IRac &arInst) {
+  return arInst.next.protocol != decode_type_t::UNKNOWN;
 }
 
-void salvarProtocoloAr() {
-  prefs.putInt("protocolo", (int)ar.next.protocol);
-  prefs.putShort("modelo", ar.next.model);
+void salvarProtocoloAr(int id, decode_type_t prot, int16_t mod) {
+  prefs.begin("ar", false);
+  if (id == 1) {
+    prefs.putInt("prot1", (int)prot);
+    prefs.putShort("mod1", mod);
+  } else {
+    prefs.putInt("prot2", (int)prot);
+    prefs.putShort("mod2", mod);
+  }
+  prefs.end();
+  Serial.printf("[MEMÓRIA] Protocolo do Ar %d salvo com sucesso!\n", id);
 }
 
-// Envia o estado completo (ligado, modo, temperatura...) para o ar
-bool enviarAr() {
-  if (!arConfigurado()) return false;
-  irrecv.disableIRIn();   // Evita que o receptor leia o próprio sinal enviado
-  bool ok = ar.sendAc();
+bool enviarAr(IRac &arInst) {
+  if (!arConfigurado(arInst)) return false;
+  irrecv.disableIRIn(); // Evita que o receptor leia o próprio sinal enviado
+  bool ok = arInst.sendAc();
   irrecv.enableIRIn();
   return ok;
 }
 
-
-// Lógica de verificação e leitura do sensor IR
+// Leitura do Receptor IR com feedback visual no Serial
 void verificarReceptorIR() {
   if (!irrecv.decode(&resultadosIR)) return;
 
-  // Converte o valor lido para String Hexadecimal
   ultimoCodigoIR = resultToHexidecimal(&resultadosIR);
   decode_type_t protocolo = resultadosIR.decode_type;
 
+  Serial.println("=================================");
   Serial.print("Sinal IR Recebido: ");
   Serial.println(ultimoCodigoIR);
-  Serial.print("Protocolo: ");
+  Serial.print("Protocolo Detectado: ");
   Serial.println(typeToString(protocolo));
 
-  // Se for um controle de ar-condicionado conhecido, aprende a marca e
-  // sincroniza o estado (assim o site acompanha quem usar o controle original)
   if (IRac::isProtocolSupported(protocolo)) {
     stdAc::state_t lido;
-    if (IRAcUtils::decodeToState(&resultadosIR, &lido, &ar.next)) {
-      bool protocoloNovo = (lido.protocol != ar.next.protocol) || (lido.model != ar.next.model);
-      ar.next = lido;
-      ar.markAsSent(); // O controle original já enviou esse estado
-
-      if (protocoloNovo) {
-        salvarProtocoloAr();
-        Serial.print("Ar-condicionado aprendido: ");
-        Serial.print(typeToString(lido.protocol));
-        Serial.print(" (modelo ");
-        Serial.print(lido.model);
-        Serial.println(")");
-      }
-      Serial.println(IRAcUtils::resultAcToString(&resultadosIR));
+    // Tenta sincronizar com Ar 1
+    if (IRAcUtils::decodeToState(&resultadosIR, &lido, &ar1.next)) {
+      bool protNovo = (lido.protocol != ar1.next.protocol) || (lido.model != ar1.next.model);
+      ar1.next = lido;
+      ar1.markAsSent();
+      if (protNovo) salvarProtocoloAr(1, lido.protocol, lido.model);
+      Serial.println("[AR 1] Estado atualizado pelo controle físico.");
     }
+    
+    // Tenta sincronizar com Ar 2
+    if (IRAcUtils::decodeToState(&resultadosIR, &lido, &ar2.next)) {
+      bool protNovo = (lido.protocol != ar2.next.protocol) || (lido.model != ar2.next.model);
+      ar2.next = lido;
+      ar2.markAsSent();
+      if (protNovo) salvarProtocoloAr(2, lido.protocol, lido.model);
+      Serial.println("[AR 2] Estado atualizado pelo controle físico.");
+    }
+    Serial.println(IRAcUtils::resultAcToString(&resultadosIR));
   }
+  Serial.println("=================================");
 
-  // Prepara o sensor para a próxima leitura
   irrecv.resume();
 }
 
+// Resiliência de conexão Wi-Fi
+void gerenciarConexaoWiFi() {
+  if (WiFi.status() != WL_CONNECTED) {
+    unsigned long agora = millis();
+    if (agora - ultimaTentativaConexao >= INTERVALO_RECONEXAO) {
+      ultimaTentativaConexao = agora;
+      Serial.println("[Wi-Fi] Conexão perdida. Tentando reconectar...");
+      WiFi.disconnect();
+      WiFi.reconnect();
+    }
+  }
+}
 
-// --- Rotas HTTP da API ---
+// --- Rotas HTTP ---
 void handleOptions() {
   aplicarCORS();
   server.send(204);
 }
 
-
 void handleStatus() {
   aplicarCORS();
 
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<768> doc;
   doc["luz"] = estadoLuz;
   doc["tranca"] = estadoTranca ? "destrancado" : "trancado";
   doc["presenca"] = (digitalRead(PIN_PIR) == HIGH);
   doc["ultimo_ir"] = ultimoCodigoIR;
 
-  doc["ar"]["configurado"] = arConfigurado();
-  doc["ar"]["protocolo"] = typeToString(ar.next.protocol);
-  doc["ar"]["ligado"] = ar.next.power;
-  doc["ar"]["temperatura"] = ar.next.degrees;
-  doc["ar"]["modo"] = modoParaTexto(ar.next.mode);
+  doc["ar1"]["configurado"] = arConfigurado(ar1);
+  doc["ar1"]["protocolo"] = typeToString(ar1.next.protocol);
+  doc["ar1"]["ligado"] = ar1.next.power;
+  doc["ar1"]["temperatura"] = ar1.next.degrees;
+  doc["ar1"]["modo"] = modoParaTexto(ar1.next.mode);
+
+  doc["ar2"]["configurado"] = arConfigurado(ar2);
+  doc["ar2"]["protocolo"] = typeToString(ar2.next.protocol);
+  doc["ar2"]["ligado"] = ar2.next.power;
+  doc["ar2"]["temperatura"] = ar2.next.degrees;
+  doc["ar2"]["modo"] = modoParaTexto(ar2.next.mode);
 
   String respostaJson;
   serializeJson(doc, respostaJson);
@@ -173,8 +201,7 @@ void handleLuz() {
   if (server.hasArg("plain")) {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, server.arg("plain"));
-    bool ligar = doc["ligar"];
-    setLuz(ligar);
+    setLuz(doc["ligar"]);
     server.send(200, "application/json", "{\"status\":\"ok\"}");
   } else {
     server.send(400, "application/json", "{\"erro\":\"requisicao incorreta\"}");
@@ -186,127 +213,99 @@ void handleTranca() {
   if (server.hasArg("plain")) {
     StaticJsonDocument<200> doc;
     deserializeJson(doc, server.arg("plain"));
-    bool destrancar = doc["destrancar"];
-    setTranca(destrancar);
+    setTranca(doc["destrancar"]);
     server.send(200, "application/json", "{\"status\":\"ok\"}");
   } else {
     server.send(400, "application/json", "{\"erro\":\"requisicao incorreta\"}");
   }
 }
 
-// Corpo aceito (todos os campos opcionais):
-// { "ligar": true, "temperatura": 23, "modo": "frio" | "quente" | "auto" | "ventilar" | "seco" }
 void handleAr() {
   aplicarCORS();
-
   if (!server.hasArg("plain")) {
     server.send(400, "application/json", "{\"erro\":\"requisicao incorreta\"}");
     return;
   }
 
-  if (!arConfigurado()) {
-    server.send(409, "application/json",
-      "{\"erro\":\"Ar ainda nao configurado: aponte o controle original para o receptor IR e aperte qualquer botao\"}");
-    return;
-  }
-
-  StaticJsonDocument<200> doc;
+  StaticJsonDocument<300> doc;
   if (deserializeJson(doc, server.arg("plain"))) {
     server.send(400, "application/json", "{\"erro\":\"JSON invalido\"}");
     return;
   }
 
-  if (doc["ligar"].is<bool>()) {
-    ar.next.power = doc["ligar"].as<bool>();
-  }
-  if (doc["temperatura"].is<float>()) {
-    ar.next.degrees = constrain(doc["temperatura"].as<float>(), 16.0f, 30.0f);
-  }
-  if (doc["modo"].is<const char*>()) {
-    ar.next.mode = textoParaModo(doc["modo"].as<String>());
-  }
-  ar.next.celsius = true;
+  int idAr = doc["id"] | 1;
+  IRac &arAlvo = (idAr == 2) ? ar2 : ar1;
 
-  if (enviarAr()) {
+  if (!arConfigurado(arAlvo)) {
+    server.send(409, "application/json", "{\"erro\":\"Ar ainda nao aprendido via IR\"}");
+    return;
+  }
+
+  if (doc["ligar"].is<bool>()) arAlvo.next.power = doc["ligar"].as<bool>();
+  if (doc["temperatura"].is<float>()) arAlvo.next.degrees = constrain(doc["temperatura"].as<float>(), 16.0f, 30.0f);
+  if (doc["modo"].is<const char*>()) arAlvo.next.mode = textoParaModo(doc["modo"].as<String>());
+  arAlvo.next.celsius = true;
+
+  if (enviarAr(arAlvo)) {
+    Serial.printf("[HTTP] Comando enviado ao Ar %d com sucesso.\n", idAr);
     server.send(200, "application/json", "{\"status\":\"ok\"}");
   } else {
-    server.send(500, "application/json", "{\"erro\":\"falha ao enviar o sinal IR\"}");
+    Serial.printf("[ERRO] Falha ao disparar IR do Ar %d.\n", idAr);
+    server.send(500, "application/json", "{\"erro\":\"falha ao enviar sinal IR\"}");
   }
 }
 
-
-void enviarDadosParaWroom() {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    // Substitua pelo IP real do seu ESP32 Wroom
-    http.begin("http://192.168.1.50/luz");
-    http.addHeader("Content-Type", "application/json");
-
-    // Envia um JSON simulando um comando
-    int httpResponseCode = http.POST("{\"ligar\":true}");
-
-    if (httpResponseCode > 0) {
-      String resposta = http.getString();
-      Serial.println(resposta);
-    } else {
-      Serial.print("Erro no envio: ");
-      Serial.println(httpResponseCode);
-    }
-    http.end();
-  }
-}
-
-// --- Setup e Loop ---
 void setup() {
   Serial.begin(115200);
+  delay(500);
+  Serial.println("\n--- INICIALIZANDO ESP32 SISTEMA DE AUTOMAÇÃO ---");
 
-  // Configuração dos Pinos
   pinMode(PIN_RELE_LUZ, OUTPUT);
   pinMode(PIN_TRANCA, OUTPUT);
   pinMode(PIN_PIR, INPUT);
 
-  // Inicializa a escuta do receptor VS1838B
   irrecv.enableIRIn();
 
-  // Estados Iniciais
   setLuz(false);
   setTranca(false);
 
-  // Estado inicial do ar (não é enviado no boot, para não desligar o ar sem querer)
-  prefs.begin("ar", false);
-  ar.next.protocol = (decode_type_t)prefs.getInt("protocolo", (int)decode_type_t::UNKNOWN);
-  ar.next.model = prefs.getShort("modelo", -1);
-  ar.next.power = false;
-  ar.next.mode = stdAc::opmode_t::kCool;
-  ar.next.celsius = true;
-  ar.next.degrees = 23;
-  ar.next.fanspeed = stdAc::fanspeed_t::kAuto;
-  ar.next.swingv = stdAc::swingv_t::kAuto;
+  // Carregar Protocolos Armazenados na Flash
+  prefs.begin("ar", true);
+  ar1.next.protocol = (decode_type_t)prefs.getInt("prot1", (int)decode_type_t::UNKNOWN);
+  ar1.next.model = prefs.getShort("mod1", -1);
+  ar2.next.protocol = (decode_type_t)prefs.getInt("prot2", (int)decode_type_t::UNKNOWN);
+  ar2.next.model = prefs.getShort("mod2", -1);
+  prefs.end();
 
-  if (arConfigurado()) {
-    Serial.print("Ar-condicionado configurado: ");
-    Serial.println(typeToString(ar.next.protocol));
-  } else {
-    Serial.println("Ar-condicionado ainda nao configurado: aponte o controle original para o receptor IR e aperte um botao.");
-  }
+  // Ajustes iniciais padrão dos aparelhos
+  ar1.next.power = false; ar1.next.mode = stdAc::opmode_t::kCool; ar1.next.degrees = 23; ar1.next.celsius = true;
+  ar2.next.power = false; ar2.next.mode = stdAc::opmode_t::kCool; ar2.next.degrees = 23; ar2.next.celsius = true;
 
-  // Conexão Wi-Fi
+  Serial.print("Ar 01 configurado: "); Serial.println(arConfigurado(ar1) ? typeToString(ar1.next.protocol) : "Não");
+  Serial.print("Ar 02 configurado: "); Serial.println(arConfigurado(ar2) ? typeToString(ar2.next.protocol) : "Não");
+
+  // Conexão Wi-Fi resiliente
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(ssid, password);
-  Serial.print("Conectando ao Wi-Fi");
+
+  Serial.print("Conectando ao Wi-Fi '");
+  Serial.print(ssid);
+  Serial.print("'");
 
   int tentativas = 0;
-  while (WiFi.status() != WL_CONNECTED && tentativas < 30) {
+  while (WiFi.status() != WL_CONNECTED && tentativas < 20) { // Timeout de 10s no boot
     delay(500);
     Serial.print(".");
     tentativas++;
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWi-Fi Conectado com sucesso!");
-    Serial.print("Endereço IP do ESP32: ");
+    Serial.println("\n[Wi-Fi] Conectado com sucesso!");
+    Serial.print("[Wi-Fi] ENDEREÇO IP DO ESP32: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\nFalha ao conectar ao Wi-Fi! Verifique a senha ou se a rede é 2.4GHz.");
+    Serial.println("\n[AVISO] Não foi possível conectar ao Wi-Fi na inicialização. O sistema tentará reconectar em segundo plano.");
   }
 
   // Registra as rotas da API
@@ -320,13 +319,11 @@ void setup() {
   server.on("/ar", HTTP_OPTIONS, handleOptions);
 
   server.begin();
-  Serial.println("Servidor Web HTTP pronto!");
+  Serial.println("[HTTP] Servidor Web pronto para receber requisições.");
 }
 
 void loop() {
-  // Trata requisições HTTP do aplicativo/navegador
+  gerenciarConexaoWiFi();
   server.handleClient();
-
-  // Verifica continuamente se o receptor IR capturou algum botão
   verificarReceptorIR();
 }
