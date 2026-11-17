@@ -4,17 +4,47 @@ const IP_ESP32_CAM = "http://10.14.52.250:81/stream";
 const TEMP_MIN = 16;
 const TEMP_MAX = 30;
 
-// Estado global da sala
-let portaVR = false;
-let luzVR = false;
+// 1. Tratamento da URL e definição correta e global de 'tituloFormatado'
+const parametros = new URLSearchParams(window.location.search);
+const nomeSala = parametros.get('sala');
 
-let ar1VR = false;
-let tempAr1 = 23;
+let tituloFormatado = "Sala --";
+
+if (nomeSala) {
+    if (!isNaN(nomeSala)) {
+        tituloFormatado = `Sala ${nomeSala.padStart(2, '0')}`;
+    } else {
+        tituloFormatado = nomeSala.replace(/_/g, ' ');
+    }
+    document.getElementById('salaNum').innerText = tituloFormatado;
+    document.title = `${tituloFormatado} - Automação IFRJ`;
+}
+
+// 2. Recuperação do estado do localStorage de forma segura no escopo global
+const statusSalvo = JSON.parse(localStorage.getItem(tituloFormatado));
+
+// Declaração global das variáveis de estado da sala
+let portaVR = statusSalvo ? statusSalvo.porta : false;
+let luzVR = statusSalvo ? statusSalvo.iluminacao : false;
+
+let ar1VR = statusSalvo ? statusSalvo.ar1[0] : false;
+let tempAr1 = statusSalvo ? statusSalvo.ar1[1] : 23;
 let timerTemp1 = null;
 
-let ar2VR = false;
-let tempAr2 = 23;
+let ar2VR = statusSalvo ? statusSalvo.ar2[0] : false;
+let tempAr2 = statusSalvo ? statusSalvo.ar2[1] : 23;
 let timerTemp2 = null;
+
+// Função auxiliar para salvar o estado atual no localStorage da sala específica
+function salvarEstadoLocal() {
+    const estadoAtual = {
+        porta: portaVR,
+        iluminacao: luzVR,
+        ar1: [ar1VR, tempAr1],
+        ar2: [ar2VR, tempAr2]
+    };
+    localStorage.setItem(tituloFormatado, JSON.stringify(estadoAtual));
+}
 
 // Elementos de UI
 const portaBtn = document.getElementById("btnPorta");
@@ -141,6 +171,9 @@ async function atualizarStatus() {
         renderAr(1);
         renderAr(2);
         setConexaoStatus(true);
+        
+        // Salva o estado atualizado automaticamente após sincronizar com o ESP32
+        salvarEstadoLocal();
     } catch (erro) {
         setConexaoStatus(false);
         console.warn("Falha na sincronização com o ESP32:", erro);
@@ -160,12 +193,14 @@ function setConexaoStatus(online) {
 async function abrirPorta() {
     portaVR = !portaVR;
     renderPorta();
+    salvarEstadoLocal(); // Salva alteração localmente
     try {
         await enviarComando("/tranca", { destrancar: portaVR });
         showToast(portaVR ? "Porta destrancada!" : "Porta trancada!");
     } catch (erro) {
         portaVR = !portaVR;
         renderPorta();
+        salvarEstadoLocal();
         showToast("Erro ao acionar porta.", true);
     }
 }
@@ -173,12 +208,14 @@ async function abrirPorta() {
 async function ligarLuz() {
     luzVR = !luzVR;
     renderLuz();
+    salvarEstadoLocal(); // Salva alteração localmente
     try {
         await enviarComando("/luz", { ligar: luzVR });
         showToast(luzVR ? "Luzes ligadas!" : "Luzes desligadas!");
     } catch (erro) {
         luzVR = !luzVR;
         renderLuz();
+        salvarEstadoLocal();
         showToast("Erro ao acionar iluminação.", true);
     }
 }
@@ -187,23 +224,27 @@ async function ligarAr(id) {
     if (id === 1) {
         ar1VR = !ar1VR;
         renderAr(1);
+        salvarEstadoLocal();
         try {
             await enviarComando("/ar", { id: 1, ligar: ar1VR, temperatura: tempAr1 });
             showToast(ar1VR ? "Ar 01 ligado!" : "Ar 01 desligado!");
         } catch (erro) {
             ar1VR = !ar1VR;
             renderAr(1);
+            salvarEstadoLocal();
             showToast("Erro ao acionar Ar 01.", true);
         }
     } else {
         ar2VR = !ar2VR;
         renderAr(2);
+        salvarEstadoLocal();
         try {
             await enviarComando("/ar", { id: 2, ligar: ar2VR, temperatura: tempAr2 });
             showToast(ar2VR ? "Ar 02 ligado!" : "Ar 02 desligado!");
         } catch (erro) {
             ar2VR = !ar2VR;
             renderAr(2);
+            salvarEstadoLocal();
             showToast("Erro ao acionar Ar 02.", true);
         }
     }
@@ -213,6 +254,7 @@ function mudarTemp(id, delta) {
     if (id === 1) {
         tempAr1 = Math.min(TEMP_MAX, Math.max(TEMP_MIN, tempAr1 + delta));
         renderAr(1);
+        salvarEstadoLocal();
         if (!ar1VR) return;
 
         clearTimeout(timerTemp1);
@@ -229,6 +271,7 @@ function mudarTemp(id, delta) {
     } else {
         tempAr2 = Math.min(TEMP_MAX, Math.max(TEMP_MIN, tempAr2 + delta));
         renderAr(2);
+        salvarEstadoLocal();
         if (!ar2VR) return;
 
         clearTimeout(timerTemp2);
@@ -266,20 +309,13 @@ window.onclick = function(event) {
     }
 };
 
-const parametros = new URLSearchParams(window.location.search);
-const nomeSala = parametros.get('sala');
-
-if (nomeSala) {
-    let tituloFormatado = nomeSala;
-    if (!isNaN(nomeSala)) {
-        tituloFormatado = `Sala ${nomeSala.padStart(2, '0')}`;
-    } else {
-        tituloFormatado = nomeSala.replace(/_/g, ' ');
-    }
-    document.getElementById('salaNum').innerText = tituloFormatado;
-    document.title = `${tituloFormatado} - Automação IFRJ`;
-}
-
 function voltar() {
+    salvarEstadoLocal(); // Garante o salvamento antes de sair
     window.location.href = "../index.html";
 }
+
+// Executa a renderização inicial baseada nos dados recuperados do localStorage ou padrões
+renderPorta();
+renderLuz();
+renderAr(1);
+renderAr(2);
