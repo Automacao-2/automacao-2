@@ -1,4 +1,4 @@
-const IP_ESP32 = "http://10.14.55.32";
+const IP_ESP32 = "http://10.14.55.234";
 const IP_ESP32_CAM = "http://10.14.52.250:81/stream";
 
 const TEMP_MIN = 16;
