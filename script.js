@@ -47,7 +47,9 @@ function alternarAndarGrade(andar) {
 }
 
 // Controle do Tooltip na Planta Baixa
-function mostrarTooltip(event, nomeAmbiente) {
+const cacheStatusMapa = {};
+
+async function mostrarTooltip(event, nomeAmbiente) {
     const tooltip = document.getElementById("mapTooltip");
     const titulo = document.getElementById("tipSalaTitulo");
     const statusEl = document.getElementById("tipStatus");
@@ -57,16 +59,48 @@ function mostrarTooltip(event, nomeAmbiente) {
     const temp2El = document.getElementById("tipTemp2");
 
     titulo.innerText = nomeAmbiente;
-    
-    statusEl.innerText = "Online";
-    statusEl.style.color = "#16a34a";
-    luzEl.innerText = "Desligada";
-    trancaEl.innerText = "Trancada";
-    if (temp1El) temp1El.innerText = "23°C";
-    if (temp2El) temp2El.innerText = "23°C";
-
     atualizarPosicaoTooltip(event);
     tooltip.style.display = "block";
+
+    // Converte "Sala 01" -> "1" ou mantém "Laboratório de..."
+    const chaveSala = nomeAmbiente.startsWith("Sala ")
+        ? String(parseInt(nomeAmbiente.replace("Sala ", ""), 10))
+        : nomeAmbiente;
+
+    const config = obterConfigSala(chaveSala);
+    if (!config || !config.ip) return;
+
+    const agora = Date.now();
+    if (cacheStatusMapa[chaveSala] && (agora - cacheStatusMapa[chaveSala].timestamp < 5000)) {
+        preencherDadosTooltip(cacheStatusMapa[chaveSala].dados, statusEl, luzEl, trancaEl, temp1El, temp2El);
+        return;
+    }
+
+    statusEl.innerText = "Consultando...";
+    statusEl.style.color = "#64748b";
+
+    try {
+        const res = await fetch(`${config.ip}/status`, { signal: AbortSignal.timeout(1500) });
+        const dados = await res.json();
+        cacheStatusMapa[chaveSala] = { timestamp: agora, dados };
+        preencherDadosTooltip(dados, statusEl, luzEl, trancaEl, temp1El, temp2El);
+    } catch (_) {
+        statusEl.innerText = "Offline";
+        statusEl.style.color = "#dc2626";
+        luzEl.innerText = "--";
+        trancaEl.innerText = "--";
+        if (temp1El) temp1El.innerText = "--";
+        if (temp2El) temp2El.innerText = "--";
+    }
+}
+
+function preencherDadosTooltip(dados, statusEl, luzEl, trancaEl, temp1El, temp2El) {
+    statusEl.innerText = "Online";
+    statusEl.style.color = "#16a34a";
+    luzEl.innerText = dados.luz ? "Ligada" : "Desligada";
+    trancaEl.innerText = dados.tranca === "destrancado" ? "Destrancada" : "Trancada";
+    if (temp1El && dados.ar1) temp1El.innerText = `${Math.round(dados.ar1.temperatura)}°C`;
+    if (temp2El && dados.ar2) temp2El.innerText = `${Math.round(dados.ar2.temperatura)}°C`;
 }
 
 function atualizarPosicaoTooltip(event) {
